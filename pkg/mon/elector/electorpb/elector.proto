@@ -1,0 +1,25 @@
+syntax = "proto2";
+package electorpb;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.goproto_enum_prefix_all) = false;
+
+enum MessageType {
+  MsgElect = 0;
+  MsgRequestVote = 1;
+  MsgRequestVoteAck = 2;
+  MsgVictory = 3;
+}
+
+message Message {
+  required MessageType type = 1 [(gogoproto.nullable) = false];
+  optional int64 from = 2 [(gogoproto.nullable) = false];
+  optional int64 to = 3 [(gogoproto.nullable) = false];
+  optional int64 epoch = 4 [(gogoproto.nullable) = false];
+  optional bool granted = 5 [(gogoproto.nullable) = false];
+}
