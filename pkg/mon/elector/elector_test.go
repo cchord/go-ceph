@@ -167,19 +167,31 @@ func TestBasic(t *testing.T) {
 
 	{
 		glog.Infoln("\nall start election...\n")
-		c.electors[1].StartElection()
-		c.electors[2].StartElection()
-		c.electors[3].StartElection()
-		c.electors[4].StartElection()
+		for id := range c.electors {
+			go func(id int64) {
+				c.electors[id].StartElection()
+			}(id)
+		}
+		go check(time.Second*15, 10)
+		<-done
+	}
+
+	{
+		glog.Infoln("\nblock 1, 5 starts election...\n")
+		c.block(1)
 		c.electors[5].StartElection()
 		go check(time.Second*15, 10)
 		<-done
 	}
 
 	{
-		glog.Infoln("\nblock 1...\n")
-		c.block(1)
-		c.electors[5].StartElection()
+		glog.Infoln("\nblock 1, 5, all start election...\n")
+		c.block(5)
+		for id := range c.electors {
+			go func(id int64) {
+				c.electors[id].StartElection()
+			}(id)
+		}
 		go check(time.Second*15, 10)
 		<-done
 	}

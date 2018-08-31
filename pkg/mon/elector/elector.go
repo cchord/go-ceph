@@ -144,9 +144,8 @@ func (el *Elector) startElection() {
 func (el *Elector) winElection() {
 	glog.V(5).Infoln(el.whoami, el.epoch, "- i win election!")
 
-	el.electingMe = false
-	el.quorum, el.ackedMe = el.ackedMe, nil
-	el.cancelTimer()
+	el.quorum = el.ackedMe
+	el.reset()
 
 	assert(el.epoch%2 == 1)
 	el.bumpEpoch(el.epoch + 1)
@@ -198,29 +197,18 @@ func (el *Elector) handleRequestVote(m pb.Message) {
 		return
 	}
 
-	if el.whoami < m.From {
-		glog.V(5).Infoln(el.whoami, el.epoch, "- i should be the leader!")
-		// i should win!
-		if !el.electingMe {
-			el.startElection()
-		}
-		// TODO: send a reject message?
-	} else {
-		glog.V(5).Infoln(el.whoami, el.epoch, "- grant vote to", m.From)
-		if el.electingMe {
-			el.electingMe = false
-			el.ackedMe = nil // recycle the map
-			el.cancelTimer()
-		}
-		// grant vote
-		el.send(pb.Message{
-			Type:    pb.MsgRequestVoteAck,
-			From:    el.whoami,
-			To:      m.From,
-			Epoch:   el.epoch,
-			Granted: true,
-		})
+	glog.V(5).Infoln(el.whoami, el.epoch, "- grant vote to", m.From)
+	if el.electingMe {
+		el.reset()
 	}
+	// grant vote
+	el.send(pb.Message{
+		Type:    pb.MsgRequestVoteAck,
+		From:    el.whoami,
+		To:      m.From,
+		Epoch:   el.epoch,
+		Granted: true,
+	})
 }
 
 func (el *Elector) handleRequestVoteAck(m pb.Message) {
@@ -236,7 +224,6 @@ func (el *Elector) handleRequestVoteAck(m pb.Message) {
 			el.bumpEpoch(m.Epoch)
 		}
 		glog.V(5).Infoln(el.whoami, el.epoch, "- rejected by peer:", m.String())
-		//el.startElection()
 		return
 	}
 
@@ -260,7 +247,6 @@ func (el *Elector) handleVictory(m pb.Message) {
 	}
 
 	assert(m.Epoch%2 == 0)
-	assert(m.From < el.whoami)
 
 	// TODO: call some callbacks
 	if el.lose != nil {
@@ -269,6 +255,14 @@ func (el *Elector) handleVictory(m pb.Message) {
 
 	glog.V(5).Infoln(el.whoami, el.epoch, "-", m.From, "wins the election")
 
+	if el.electingMe {
+		el.reset()
+	}
+}
+
+func (el *Elector) reset() {
+	el.electingMe = false
+	el.ackedMe = nil
 	el.cancelTimer()
 }
 
