@@ -144,9 +144,8 @@ func (el *Elector) startElection() {
 func (el *Elector) winElection() {
 	glog.V(5).Infoln(el.whoami, el.epoch, "- i win election!")
 
-	el.electingMe = false
-	el.quorum, el.ackedMe = el.ackedMe, nil
-	el.cancelTimer()
+	el.quorum = el.ackedMe
+	el.reset()
 
 	assert(el.epoch%2 == 1)
 	el.bumpEpoch(el.epoch + 1)
@@ -208,9 +207,7 @@ func (el *Elector) handleRequestVote(m pb.Message) {
 	} else {
 		glog.V(5).Infoln(el.whoami, el.epoch, "- grant vote to", m.From)
 		if el.electingMe {
-			el.electingMe = false
-			el.ackedMe = nil // recycle the map
-			el.cancelTimer()
+			el.reset()
 		}
 		// grant vote
 		el.send(pb.Message{
@@ -269,6 +266,14 @@ func (el *Elector) handleVictory(m pb.Message) {
 
 	glog.V(5).Infoln(el.whoami, el.epoch, "-", m.From, "wins the election")
 
+	if el.electingMe {
+		el.reset()
+	}
+}
+
+func (el *Elector) reset() {
+	el.electingMe = false
+	el.ackedMe = nil
 	el.cancelTimer()
 }
 
