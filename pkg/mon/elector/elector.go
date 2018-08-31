@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
+	pb "github.com/cchord/go-ceph/pkg/mon/elector/electorpb"
 	"github.com/golang/glog"
-	pb "github.com/jhzhu89/go-ceph/pkg/mon/elector/electorpb"
 )
 
 var ErrKeyNotFound = errors.New("requested key not found")

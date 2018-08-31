@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/cchord/go-ceph/pkg/mon/elector/electorpb"
 	"github.com/golang/glog"
-	pb "github.com/jhzhu89/go-ceph/pkg/mon/elector/electorpb"
 )
 
 func init() {
